@@ -9,13 +9,13 @@ import {
 } from '../engine/chessRules';
 import { GameState, Square, Move, PieceColor, PieceType, GameStatus } from '../engine/types';
 import { getAiMove } from '../ai/getAiMove';
-import { Difficulty, Personality } from '../settings/types';
+import { Difficulty, Personality, PlayerColor } from '../settings/types';
 import { AnimatingMove } from '../animation/animationTypes';
 
 // Shared animation duration constant for smoother animations
 const ANIMATION_DURATION = 600;
 
-export function useChessGame(difficulty: Difficulty, personality: Personality) {
+export function useChessGame(difficulty: Difficulty, personality: Personality, playerColor: PlayerColor) {
   const [gameState, setGameState] = useState<GameState>(createInitialGameState());
   const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
   const [legalMoves, setLegalMoves] = useState<Square[]>([]);
@@ -24,30 +24,43 @@ export function useChessGame(difficulty: Difficulty, personality: Personality) {
   const [pendingPromotion, setPendingPromotion] = useState<Move | null>(null);
   const [isAiThinking, setIsAiThinking] = useState(false);
 
+  // Derive AI color as opposite of player color
+  const aiColor: PieceColor = playerColor === 'w' ? 'b' : 'w';
+
   // Check game status
   useEffect(() => {
     const status = getGameStatus(gameState);
     setGameStatus(status);
   }, [gameState]);
 
-  // AI move
+  // AI move - triggers when it's AI's turn
   useEffect(() => {
-    if (gameState.turn === 'b' && gameStatus === 'playing' && !isAiThinking && !animatingMove) {
+    if (gameState.turn === aiColor && gameStatus === 'playing' && !isAiThinking && !animatingMove && !pendingPromotion) {
       setIsAiThinking(true);
       
       // Add slight delay for better UX
       setTimeout(() => {
         const aiMove = getAiMove(gameState, difficulty, personality);
         if (aiMove) {
-          executeMove(aiMove);
+          // Check if AI move needs promotion
+          if (needsPromotion(gameState, aiMove)) {
+            // AI always promotes to queen
+            executeMove({ ...aiMove, promotion: 'q' });
+          } else {
+            executeMove(aiMove);
+          }
         }
         setIsAiThinking(false);
       }, 300);
     }
-  }, [gameState.turn, gameStatus, isAiThinking, animatingMove, difficulty, personality]);
+  }, [gameState.turn, gameStatus, isAiThinking, animatingMove, pendingPromotion, difficulty, personality, aiColor]);
 
   const selectSquare = useCallback((square: Square) => {
-    if (gameStatus !== 'playing' || gameState.turn !== 'w' || animatingMove || isAiThinking) return;
+    // Block interaction while promotion is pending
+    if (pendingPromotion) return;
+    
+    // Only allow player to move on their turn
+    if (gameStatus !== 'playing' || gameState.turn !== playerColor || animatingMove || isAiThinking) return;
 
     // If clicking the same square, deselect
     if (selectedSquare === square) {
@@ -81,19 +94,23 @@ export function useChessGame(difficulty: Difficulty, personality: Personality) {
       setSelectedSquare(null);
       setLegalMoves([]);
     }
-  }, [gameState, selectedSquare, legalMoves, gameStatus, animatingMove, isAiThinking]);
+  }, [gameState, selectedSquare, legalMoves, gameStatus, animatingMove, isAiThinking, playerColor, pendingPromotion]);
 
   const makeMove = useCallback((move: Move) => {
-    if (gameStatus !== 'playing' || gameState.turn !== 'w' || animatingMove || isAiThinking) return;
+    // Block interaction while promotion is pending
+    if (pendingPromotion) return;
+    
+    // Only allow player to move on their turn
+    if (gameStatus !== 'playing' || gameState.turn !== playerColor || animatingMove || isAiThinking) return;
     
     if (needsPromotion(gameState, move)) {
       setPendingPromotion(move);
     } else {
       executeMove(move);
     }
-  }, [gameState, gameStatus, animatingMove, isAiThinking]);
+  }, [gameState, gameStatus, animatingMove, isAiThinking, playerColor, pendingPromotion]);
 
-  const executeMove = useCallback((move: Move, promotionPiece?: PieceType) => {
+  const executeMove = useCallback((move: Move) => {
     // Start animation
     setAnimatingMove({
       from: move.from,
@@ -104,9 +121,7 @@ export function useChessGame(difficulty: Difficulty, personality: Personality) {
 
     // Apply move after animation completes
     setTimeout(() => {
-      // If promotion piece is provided, add it to the move
-      const moveWithPromotion = promotionPiece ? { ...move, promotion: promotionPiece } : move;
-      const newState = applyMove(gameState, moveWithPromotion);
+      const newState = applyMove(gameState, move);
       setGameState(newState);
       setAnimatingMove(null);
     }, ANIMATION_DURATION);
@@ -114,10 +129,17 @@ export function useChessGame(difficulty: Difficulty, personality: Personality) {
 
   const promotePawn = useCallback((pieceType: PieceType) => {
     if (pendingPromotion) {
-      executeMove(pendingPromotion, pieceType);
+      const moveWithPromotion = { ...pendingPromotion, promotion: pieceType };
+      executeMove(moveWithPromotion);
       setPendingPromotion(null);
     }
   }, [pendingPromotion, executeMove]);
+
+  const cancelPendingPromotion = useCallback(() => {
+    setPendingPromotion(null);
+    setSelectedSquare(null);
+    setLegalMoves([]);
+  }, []);
 
   const resetGame = useCallback(() => {
     setGameState(createInitialGameState());
@@ -137,9 +159,11 @@ export function useChessGame(difficulty: Difficulty, personality: Personality) {
     selectedSquare,
     legalMoves,
     animatingMove,
+    pendingPromotion,
     makeMove,
     selectSquare,
     resetGame,
     promotePawn,
+    cancelPendingPromotion,
   };
 }

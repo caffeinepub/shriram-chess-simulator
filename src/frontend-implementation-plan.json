@@ -1,54 +1,81 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix Settings row layout; improve 3D knight geometry and black-piece top accents",
+  "title": "Pawn promotion in-board overlay + stronger rules/draw validation",
   "requirements": [
     {
-      "id": "REQ-18",
-      "summary": "Keep Player Name in Game Settings while forcing the three selects (Board Mode, Difficulty Setting, Player Mode) to stay side-by-side in a single horizontal row across all breakpoints, preserving existing restart-confirm behavior.",
+      "id": "REQ-1",
+      "summary": "Add an in-board overlay pawn-promotion selector that pauses human move execution until a promotion piece is chosen.",
       "acceptanceCriteria": [
-        "On mobile, tablet, and desktop widths, the Board Mode, Difficulty Setting, and Player Mode controls appear side-by-side in a single row (no wrapping/stacking).",
-        "Player Name input remains present in the Settings panel and remains usable.",
-        "Changing any of the three settings after at least one move still triggers the existing restart confirmation flow; changing before any moves applies immediately (current behavior preserved)."
+        "When a player attempts a pawn move to the last rank, the pawn does not immediately move; instead a promotion overlay appears on top of the board area (not a full-screen page).",
+        "The overlay offers exactly four choices: Queen, Rook, Bishop, Knight.",
+        "Selecting a piece closes the overlay and completes the move with the correct promoted piece placed on the destination square.",
+        "While the promotion overlay is open, normal square selection/moves are blocked until the player selects a promotion piece (or the overlay is dismissed via an explicit cancel action, if implemented).",
+        "Promotion works in both 2D and 3D board modes."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/features/chess/settings/SettingsPanel.tsx",
+          "path": "frontend/src/features/chess/ui/PawnPromotionOverlay.tsx",
+          "operation": "create",
+          "description": "Create an in-board overlay UI component that renders exactly four promotion choices (queen/rook/bishop/knight) and an optional explicit cancel action; compose shadcn-ui components (e.g., Button) rather than modifying read-only files under frontend/src/components/ui. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Update the SettingsPanel layout so Player Name remains available while the three Select controls are rendered in a single non-wrapping horizontal row at all screen sizes (e.g., a dedicated flex row with nowrap and equal-width children), without changing any onChange wiring/props (restart-confirm behavior is handled upstream). Use the shadcn-ui Card/Input/Select components to keep styling consistent. Verify the component's usage instructions before implementing."
+          "description": "Wrap the board area in a relative container and render PawnPromotionOverlay as an absolute in-board overlay above the board (works for both Board2D and Board3D); when the overlay is open, ensure pointer interactions with the underlying board are blocked and that selecting a piece triggers the promotion action. Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
-      "id": "REQ-19",
-      "summary": "Redesign the 3D Knight geometry to eliminate deformation artifacts while keeping the clean style and ensuring a clearly distinguishable top-down silhouette.",
+      "id": "REQ-2",
+      "summary": "Expose pending-promotion state from the game hook and ensure both human and AI promotions complete via the existing promotion executor.",
       "acceptanceCriteria": [
-        "In 3D mode, the Knight renders without visible deformation/artifacts (no skewed, collapsed, or broken geometry).",
-        "From a top-down view, the Knight silhouette is clearly distinguishable versus pawn/rook/bishop/queen/king.",
-        "All other piece types remain unchanged in identity and functionality; gameplay and move input remain unaffected."
+        "The React state that tracks a pending promotion is accessible to the UI layer (e.g., via the hook return value) so the app can render the overlay only when needed.",
+        "Choosing a promotion piece calls the existing promotion action and clears the pending promotion state afterward.",
+        "If the AI makes a pawn move that reaches the last rank, the game completes the AI move with a valid promotion (default to queen unless the AI move already specifies a promotion)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/features/chess/board3d/pieces3d.tsx",
+          "path": "frontend/src/features/chess/state/useChessGame.ts",
           "operation": "modify",
-          "description": "Replace the current Knight ('n') mesh construction with a more robust, artifact-free geometry composition (avoid problematic rotations/skew on box geometries) while preserving overall piece scale/positioning and keeping other piece types unchanged; ensure the top-down silhouette remains clearly recognizable as a knight."
+          "description": "Expose pendingPromotion (and an optional cancelPendingPromotion action) via the hook return value; block selectSquare/makeMove while a promotion is pending; ensure AI moves that require promotion are executed with a valid promotion (default queen when not specified) using the existing executeMove/promotePawn flow."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Wire pendingPromotion from useChessGame into PawnPromotionOverlay visibility; pass promotePawn and optional cancel handler to the overlay so choosing a piece completes the pending move and clears the pending state. Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
-      "id": "REQ-20",
-      "summary": "Improve top-down contrast of black 3D pieces by applying a light-gray treatment to top-facing surfaces/upper accents consistently across all black piece types, without changing white pieces or adding symbols.",
+      "id": "REQ-3",
+      "summary": "Fix attack detection and tighten legal-move validation for check/checkmate and castling safety (including correct pawn attacks).",
       "acceptanceCriteria": [
-        "In 3D mode, black pieces have a clearly visible light-gray top/upper accent when viewed from above, improving contrast against the board.",
-        "The light-gray treatment is applied consistently for all black piece types (pawn, rook, knight, bishop, queen, king).",
-        "White pieces’ coloring remains visually consistent with the existing style.",
-        "No icons/letters/symbols are added to the pieces; the change is purely a material/color treatment."
+        "Check detection is correct for pawn attacks (diagonals only), and does not incorrectly report check due to pawn forward moves.",
+        "Castling is only legal when the king is not in check, does not pass through check, and does not end in check; path emptiness and rook presence are validated correctly.",
+        "Legal move generation does not allow moves that leave the moving side’s king in check (including en passant edge cases).",
+        "Game status correctly transitions among playing/checkmate/stalemate/draw based on the validated legal-move set."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/features/chess/board3d/pieces3d.tsx",
+          "path": "frontend/src/features/chess/engine/chessRules.ts",
           "operation": "modify",
-          "description": "Adjust 3D piece materials so black pieces keep a dark body color but use a light-gray material for top-facing surfaces/upper accents across pawn/rook/knight/bishop/queen/king (e.g., introduce a dedicated topAccent color for black and apply it only to the intended upper meshes); keep white piece colors consistent with the existing style and do not add any markings."
+          "description": "Update attack detection so pawn attacks are diagonal-only (do not reuse pawn forward-move generation for attack checks); tighten castling validation (validate rook presence with correct color, verify full path emptiness for both sides including queenside 'b' square, and ensure king is not in check/does not pass through/does not end in check); ensure legal-move filtering remains correct for king safety including en-passant captures."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Improve draw validation for threefold repetition and insufficient material to better match standard rules.",
+      "acceptanceCriteria": [
+        "Threefold repetition detection considers the full position state relevant to repetition (at minimum: piece placement plus side to move; and include castling/en-passant state if represented in state).",
+        "Insufficient material detection does not incorrectly return draw for positions that still have mating material, and correctly identifies basic insufficient-material cases (K vs K, K+N vs K, K+B vs K)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/features/chess/engine/chessRules.ts",
+          "operation": "modify",
+          "description": "Revise repetition tracking to record/compare a full position key that includes at least piece placement + side to move, and also incorporates castling rights and en-passant target (since they exist in state); adjust insufficient-material detection to explicitly match the basic insufficient-material cases without false positives for positions that still contain mating material."
         }
       ]
     }

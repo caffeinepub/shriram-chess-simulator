@@ -1,11 +1,13 @@
 # Specification
 
 ## Summary
-**Goal:** Improve the Game Settings layout consistency across screen sizes and enhance 3D piece clarity (fix knight deformation and improve black piece top-view contrast).
+**Goal:** Fix pawn promotion by adding an in-board overlay selection popup and strengthen the chess rules engine so validation (check, castling, legal moves, draws) matches standard rules.
 
 **Planned changes:**
-- Update the Game Settings panel layout so Board Mode, Difficulty Setting, and Player Mode are always aligned side-by-side in a single horizontal row on all screen sizes, while keeping Player Name available and preserving the existing restart-confirm behavior when changing settings mid-game.
-- Redesign and replace the 3D Knight geometry to remove deformation artifacts while keeping the existing clean 3D style and ensuring the knight is clearly recognizable from a top-down view.
-- Adjust 3D materials/colors for black pieces to add a consistent light-gray treatment on top-facing/upper surfaces across all black piece types, while keeping the main body dark and leaving white pieces unchanged.
+- Implement a new human pawn-promotion flow: detect a pawn reaching the last rank, pause move completion, and show an in-board overlay popup to choose Queen/Rook/Bishop/Knight.
+- Expose “pending promotion” state from the game hook to the UI and wire selection to the existing promotion executor so the pending move completes and state clears.
+- Ensure promotion behavior works in both 2D and 3D board modes, and that AI promotions complete with a valid promotion (defaulting to queen when unspecified).
+- Fix and strengthen rules validation: correct pawn attack detection (diagonals only), enforce castling safety (not in/through/into check plus path/rook validation), and prevent illegal moves that leave the king in check (including en passant edge cases).
+- Update draw validation to improve threefold repetition tracking (full relevant position state) and insufficient material detection (basic insufficient cases without false draws).
 
-**User-visible outcome:** The Settings panel shows the three key selects in one row on mobile/tablet/desktop, and in 3D mode the knight looks correct and black pieces are easier to distinguish from above due to improved top-surface contrast.
+**User-visible outcome:** When a pawn reaches the last rank, players get an in-board promotion popup to select the piece before the move completes; gameplay correctly enforces check, castling legality, legal move constraints, and more accurate draw detection.

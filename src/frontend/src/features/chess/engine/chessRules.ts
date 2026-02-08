@@ -66,6 +66,26 @@ export function createInitialGameState(): GameState {
   };
 }
 
+// Get pawn attack squares (diagonal only, for attack detection)
+function getPawnAttackSquares(position: Position, square: Square, piece: Piece | null): Square[] {
+  if (!piece) return [];
+  
+  const [rank, file] = squareToCoords(square);
+  const moves: Square[] = [];
+  const direction = piece.color === 'w' ? -1 : 1;
+  
+  // Only diagonal attacks
+  for (const df of [-1, 1]) {
+    const newFile = file + df;
+    const newRank = rank + direction;
+    if (newRank >= 0 && newRank < 8 && newFile >= 0 && newFile < 8) {
+      moves.push(coordsToSquare(newRank, newFile));
+    }
+  }
+  
+  return moves;
+}
+
 export function isSquareAttacked(position: Position, square: Square, byColor: PieceColor): boolean {
   const [targetRank, targetFile] = squareToCoords(square);
   
@@ -74,9 +94,18 @@ export function isSquareAttacked(position: Position, square: Square, byColor: Pi
       const piece = position[rank][file];
       if (piece && piece.color === byColor) {
         const fromSquare = coordsToSquare(rank, file);
-        const moves = getPieceMoves(position, fromSquare, piece, null, false);
-        if (moves.some(m => m === square)) {
-          return true;
+        
+        // Special handling for pawns - use attack squares only
+        if (piece.type === 'p') {
+          const pawnAttacks = getPawnAttackSquares(position, fromSquare, piece);
+          if (pawnAttacks.includes(square)) {
+            return true;
+          }
+        } else {
+          const moves = getPieceMoves(position, fromSquare, piece, null, false);
+          if (moves.some(m => m === square)) {
+            return true;
+          }
         }
       }
     }
@@ -221,27 +250,50 @@ export function getLegalMoves(state: GameState, square: Square): Square[] {
     const baseRank = isWhite ? 7 : 0;
     
     if (rank === baseRank && file === 4) {
-      // Kingside castling
-      const canCastleKingside = isWhite ? state.castlingRights.whiteKingside : state.castlingRights.blackKingside;
-      if (canCastleKingside) {
-        const path = [4, 5, 6];
-        const pathClear = path.every(f => !state.position[baseRank][f] || f === 4);
-        const pathSafe = path.every(f => !isSquareAttacked(state.position, coordsToSquare(baseRank, f), isWhite ? 'b' : 'w'));
-        
-        if (pathClear && pathSafe && state.position[baseRank][7]?.type === 'r') {
-          moves.push(coordsToSquare(baseRank, 6));
-        }
-      }
+      // Check if king is currently in check (cannot castle out of check)
+      const kingInCheck = isSquareAttacked(state.position, square, isWhite ? 'b' : 'w');
       
-      // Queenside castling
-      const canCastleQueenside = isWhite ? state.castlingRights.whiteQueenside : state.castlingRights.blackQueenside;
-      if (canCastleQueenside) {
-        const path = [4, 3, 2];
-        const pathClear = [2, 3, 4].every(f => !state.position[baseRank][f] || f === 4);
-        const pathSafe = path.every(f => !isSquareAttacked(state.position, coordsToSquare(baseRank, f), isWhite ? 'b' : 'w'));
+      if (!kingInCheck) {
+        // Kingside castling
+        const canCastleKingside = isWhite ? state.castlingRights.whiteKingside : state.castlingRights.blackKingside;
+        if (canCastleKingside) {
+          // Check rook presence and correct color
+          const rook = state.position[baseRank][7];
+          if (rook && rook.type === 'r' && rook.color === piece.color) {
+            // Check path is clear (f and g squares)
+            const pathClear = !state.position[baseRank][5] && !state.position[baseRank][6];
+            // Check king doesn't pass through or land in check
+            const f5 = coordsToSquare(baseRank, 5);
+            const g6 = coordsToSquare(baseRank, 6);
+            const pathSafe = !isSquareAttacked(state.position, f5, isWhite ? 'b' : 'w') &&
+                            !isSquareAttacked(state.position, g6, isWhite ? 'b' : 'w');
+            
+            if (pathClear && pathSafe) {
+              moves.push(coordsToSquare(baseRank, 6));
+            }
+          }
+        }
         
-        if (pathClear && pathSafe && state.position[baseRank][0]?.type === 'r') {
-          moves.push(coordsToSquare(baseRank, 2));
+        // Queenside castling
+        const canCastleQueenside = isWhite ? state.castlingRights.whiteQueenside : state.castlingRights.blackQueenside;
+        if (canCastleQueenside) {
+          // Check rook presence and correct color
+          const rook = state.position[baseRank][0];
+          if (rook && rook.type === 'r' && rook.color === piece.color) {
+            // Check path is clear (b, c, d squares)
+            const pathClear = !state.position[baseRank][1] && 
+                             !state.position[baseRank][2] && 
+                             !state.position[baseRank][3];
+            // Check king doesn't pass through or land in check (d and c squares)
+            const d3 = coordsToSquare(baseRank, 3);
+            const c2 = coordsToSquare(baseRank, 2);
+            const pathSafe = !isSquareAttacked(state.position, d3, isWhite ? 'b' : 'w') &&
+                            !isSquareAttacked(state.position, c2, isWhite ? 'b' : 'w');
+            
+            if (pathClear && pathSafe) {
+              moves.push(coordsToSquare(baseRank, 2));
+            }
+          }
         }
       }
     }
@@ -281,7 +333,7 @@ export function applyMove(state: GameState, move: Move): GameState {
     position: state.position.map(row => [...row]),
     castlingRights: { ...state.castlingRights },
     moveHistory: [...state.moveHistory],
-    positionHistory: [...state.positionHistory, positionToFEN(state.position)],
+    positionHistory: [...state.positionHistory],
   };
   
   const [fromRank, fromFile] = squareToCoords(move.from);
@@ -290,6 +342,10 @@ export function applyMove(state: GameState, move: Move): GameState {
   const capturedPiece = newState.position[toRank][toFile];
   
   if (!piece) return newState;
+  
+  // Create position key before move for repetition tracking
+  const positionKey = createPositionKey(state);
+  newState.positionHistory.push(positionKey);
   
   // Create move record with capture information
   const moveRecord: Move = {
@@ -379,6 +435,21 @@ export function applyMove(state: GameState, move: Move): GameState {
   return newState;
 }
 
+// Create a position key that includes all relevant state for repetition detection
+function createPositionKey(state: GameState): string {
+  const posFEN = positionToFEN(state.position);
+  const turn = state.turn;
+  const castling = [
+    state.castlingRights.whiteKingside ? 'K' : '',
+    state.castlingRights.whiteQueenside ? 'Q' : '',
+    state.castlingRights.blackKingside ? 'k' : '',
+    state.castlingRights.blackQueenside ? 'q' : '',
+  ].join('') || '-';
+  const ep = state.enPassantTarget || '-';
+  
+  return `${posFEN}|${turn}|${castling}|${ep}`;
+}
+
 export function getGameStatus(state: GameState): GameStatus {
   const hasLegalMoves = hasAnyLegalMoves(state);
   
@@ -395,7 +466,7 @@ export function getGameStatus(state: GameState): GameStatus {
   }
   
   // Threefold repetition
-  const currentPos = positionToFEN(state.position);
+  const currentPos = createPositionKey(state);
   const repetitions = state.positionHistory.filter(pos => pos === currentPos).length;
   if (repetitions >= 2) {
     return 'draw';
@@ -433,12 +504,15 @@ function isInsufficientMaterial(position: Position): boolean {
   }
   
   // King vs King
-  if (pieces.length === 2) return true;
+  if (pieces.length === 2) {
+    return pieces.every(p => p && p.type === 'k');
+  }
   
   // King + minor piece vs King
   if (pieces.length === 3) {
-    const hasOnlyMinor = pieces.filter(p => p !== null).some(p => p.type === 'n' || p.type === 'b');
-    return hasOnlyMinor;
+    const kings = pieces.filter(p => p && p.type === 'k').length;
+    const minorPieces = pieces.filter(p => p && (p.type === 'n' || p.type === 'b')).length;
+    return kings === 2 && minorPieces === 1;
   }
   
   return false;

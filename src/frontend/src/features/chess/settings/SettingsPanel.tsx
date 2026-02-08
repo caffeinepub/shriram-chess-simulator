@@ -2,18 +2,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BoardMode, Difficulty, Personality } from './types';
+import { BoardMode, Difficulty, Personality, PlayerColor } from './types';
 
 type SettingsPanelProps = {
   boardMode: BoardMode;
   difficulty: Difficulty;
   personality: Personality;
   playerName: string;
+  playerColor: PlayerColor;
   onBoardModeChange: (mode: BoardMode) => void;
   onDifficultyChange: (difficulty: Difficulty) => void;
   onPersonalityChange: (personality: Personality) => void;
   onPlayerNameChange: (name: string) => void;
+  onPlayerColorChange: (color: PlayerColor) => void;
   disabled?: boolean;
+  playerColorDisabled?: boolean;
 };
 
 export function SettingsPanel({
@@ -21,11 +24,14 @@ export function SettingsPanel({
   difficulty,
   personality,
   playerName,
+  playerColor,
   onBoardModeChange,
   onDifficultyChange,
   onPersonalityChange,
   onPlayerNameChange,
+  onPlayerColorChange,
   disabled = false,
+  playerColorDisabled = false,
 }: SettingsPanelProps) {
   return (
     <Card>
@@ -44,6 +50,24 @@ export function SettingsPanel({
             placeholder="Enter your name"
             className="h-8 text-sm"
           />
+        </div>
+
+        {/* Player Color - separate row */}
+        <div className="space-y-1">
+          <Label htmlFor="player-color" className="text-xs">Player Color</Label>
+          <Select
+            value={playerColor}
+            onValueChange={(value) => onPlayerColorChange(value as PlayerColor)}
+            disabled={playerColorDisabled}
+          >
+            <SelectTrigger id="player-color" className="h-8 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="w">White</SelectItem>
+              <SelectItem value="b">Black</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Three settings in one horizontal row - no wrapping */}

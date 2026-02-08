@@ -1,4 +1,4 @@
-import { Position, PieceColor, PieceType } from '../engine/types';
+import { Position, PieceColor, PieceType, GameStatus } from '../engine/types';
 import { Personality } from '../settings/types';
 
 const PIECE_VALUES: Record<PieceType, number> = {
@@ -115,4 +115,21 @@ export function evaluatePosition(position: Position, personality: Personality): 
   }
   
   return score;
+}
+
+/**
+ * Convert evaluation score to win probabilities for White and Black
+ * Uses a logistic function to map centipawn scores to probabilities
+ */
+export function evaluationToWinProbability(evaluation: number): { white: number; black: number } {
+  // Logistic function: P(win) = 1 / (1 + 10^(-eval/400))
+  // This maps centipawn advantage to win probability
+  // eval=0 → 50%, eval=400 → ~76%, eval=-400 → ~24%
+  const whiteProbability = 1 / (1 + Math.pow(10, -evaluation / 400));
+  
+  // Clamp to reasonable bounds and round to whole percentages
+  const whitePercent = Math.max(0, Math.min(100, Math.round(whiteProbability * 100)));
+  const blackPercent = 100 - whitePercent;
+  
+  return { white: whitePercent, black: blackPercent };
 }

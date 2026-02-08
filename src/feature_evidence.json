@@ -2,10 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-update-the-game-settings-panel-so-the-three-selects-board-mode-difficulty-setting-player-mode-are-arranged-in-the-same-horizontal-row-on-all-screen-sizes-not-stacked-while-keeping-player-name-available-in-the-panel-and-preserving-the-existing-restart-confirm-behavior-when-changing-settings-mid-game",
-      "featureTitle": "Update the Game Settings panel so the three selects (Board Mode, Difficulty Setting, Player Mode) are arranged in the same horizontal row on all screen sizes (not stacked), while keeping Player Name available in the panel and preserving the existing restart-confirm behavior when changing settings mid-game.",
+      "featureId": "feature-implement-a-pawn-promotion-selection-flow-from-scratch-for-human-moves-when-a-pawn-move-reaches-the-last-rank-pause-move-execution-and-show-an-in-board-overlay-popup-that-lets-the-player-choose-the-promotion-piece-queen-rook-bishop-knight-then-apply-the-move-with-the-chosen-promotion",
+      "featureTitle": "Implement a pawn-promotion selection flow from scratch for human moves: when a pawn move reaches the last rank, pause move execution and show an in-board overlay popup that lets the player choose the promotion piece (queen, rook, bishop, knight), then apply the move with the chosen promotion.",
       "files": [
-        "frontend/src/features/chess/settings/SettingsPanel.tsx"
+        "frontend/src/App.tsx",
+        "frontend/src/features/chess/ui/PawnPromotionOverlay.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -15,15 +16,16 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-18"
+        "REQ-1"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-redesign-and-replace-the-3d-knight-piece-geometry-to-fix-the-current-deformation-in-3d-mode-keeping-the-overall-clean-visual-style-consistent-with-the-existing-3d-set-and-ensuring-the-knight-remains-clearly-distinguishable-from-a-top-down-view",
-      "featureTitle": "Redesign and replace the 3D Knight piece geometry to fix the current deformation in 3D mode, keeping the overall clean visual style consistent with the existing 3D set and ensuring the knight remains clearly distinguishable from a top-down view.",
+      "featureId": "feature-expose-promotion-state-from-the-game-hook-and-wire-the-promotion-ui-to-the-existing-promotion-executor-so-the-promotion-selection-actually-completes-the-pending-move-including-for-ai-vs-player-games",
+      "featureTitle": "Expose promotion state from the game hook and wire the promotion UI to the existing promotion executor so the promotion selection actually completes the pending move (including for AI-vs-player games).",
       "files": [
-        "frontend/src/features/chess/board3d/pieces3d.tsx"
+        "frontend/src/App.tsx",
+        "frontend/src/features/chess/state/useChessGame.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -33,15 +35,15 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-19"
+        "REQ-2"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-improve-top-down-distinguishability-of-black-pieces-in-3d-mode-by-applying-a-light-gray-color-treatment-to-the-top-facing-surfaces-upper-accents-of-black-pieces-while-keeping-the-rest-of-the-black-piece-body-visibly-dark-and-ensure-the-change-is-consistent-across-all-black-piece-types",
-      "featureTitle": "Improve top-down distinguishability of black pieces in 3D mode by applying a light-gray color treatment to the top-facing surfaces/upper accents of black pieces (while keeping the rest of the black piece body visibly dark), and ensure the change is consistent across all black piece types.",
+      "featureId": "feature-strengthen-full-chess-rules-validation-in-the-rules-engine-so-check-checkmate-castling-safety-are-correct-including-fixing-attack-detection-so-pawn-forward-moves-are-not-treated-as-attacks",
+      "featureTitle": "Strengthen full chess rules validation in the rules engine so check/checkmate/castling safety are correct, including fixing attack detection so pawn forward moves are not treated as attacks.",
       "files": [
-        "frontend/src/features/chess/board3d/pieces3d.tsx"
+        "frontend/src/features/chess/engine/chessRules.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -51,7 +53,25 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-20"
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-update-draw-validation-to-better-reflect-standard-rules-for-threefold-repetition-tracking-and-insufficient-material-so-full-chess-rule-validation-does-not-incorrectly-declare-draws",
+      "featureTitle": "Update draw validation to better reflect standard rules for threefold repetition tracking and insufficient material, so “full chess rule validation” does not incorrectly declare draws.",
+      "files": [
+        "frontend/src/features/chess/engine/chessRules.ts"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
       ],
       "confidence": "high"
     }

@@ -1,176 +1,42 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 11,
-  "summary": "Build 'Shriram Chess Simulator': a playable chess game (standard rules) where the human plays against an AI with selectable difficulty and personality, offering both 2D and clean-style 3D board options with minimal animations.",
-  "architectural_notes": [
-    "Layout decision: stack UI vertically in order Settings → Board → Game Moves (below board) → Captured Pieces.",
-    "UI decision: Keep overall vertical stack (Settings → Board → Moves → Captured Pieces), but arrange controls within the Game Settings box horizontally on all screen sizes and reduce its footprint.",
-    "Decision: In 3D mode, it is acceptable to use a light-gray top surface/color treatment on black pieces for top-down clarity (color-only differentiation)."
-  ],
+  "projectStateVersion": 3,
+  "summary": "Chess game: implement pawn promotion from scratch (UI popup as in-board overlay) and add full chess rules validation.",
+  "architectural_notes": [],
   "known_issues": [
-    "3D piece silhouettes are not clearly identifiable from top view; pieces look too similar when viewed from above.",
-    "3D mode: Knight piece is deformed and needs redesign/fix.",
-    "3D mode: black pieces are hard to distinguish from a top-down view (needs improved contrast, e.g., lighter top surface)."
+    "Pawn promotion move is not working (needs rebuild from scratch)."
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-create-the-core-chess-game-with-a-human-player-vs-ai-opponent-enforcing-all-standard-chess-rules-legal-move-generation-validation-check-checkmate-stalemate-castling-en-passant-pawn-promotion-with-choice-of-piece-and-draw-conditions-at-minimum-insufficient-material-and-include-threefold-repetition-50-move-rule-if-feasible-within-scope",
-      "title": "Create the core chess game with a human player vs AI opponent, enforcing all standard chess rules: legal move generation/validation, check/checkmate, stalemate, castling, en passant, pawn promotion (with choice of piece), and draw conditions (at minimum: insufficient material; and include threefold repetition + 50-move rule if feasible within scope).",
+      "id": "feature-implement-a-pawn-promotion-selection-flow-from-scratch-for-human-moves-when-a-pawn-move-reaches-the-last-rank-pause-move-execution-and-show-an-in-board-overlay-popup-that-lets-the-player-choose-the-promotion-piece-queen-rook-bishop-knight-then-apply-the-move-with-the-chosen-promotion",
+      "title": "Implement a pawn-promotion selection flow from scratch for human moves: when a pawn move reaches the last rank, pause move execution and show an in-board overlay popup that lets the player choose the promotion piece (queen, rook, bishop, knight), then apply the move with the chosen promotion.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-a-pre-game-and-in-game-settings-ui-that-lets-the-player-select-a-board-mode-2d-or-3d-b-ai-difficulty-easy-medium-pro-and-c-ai-personality-aggressive-defensive-balanced-the-selected-options-must-be-clearly-visible-and-can-be-changed-only-when-starting-a-new-game-or-require-confirmation-to-restart",
-      "title": "Add a pre-game and in-game settings UI that lets the player select: (a) board mode: 2D or 3D, (b) AI difficulty: Easy / Medium / Pro, and (c) AI personality: Aggressive / Defensive / Balanced. The selected options must be clearly visible and can be changed only when starting a new game (or require confirmation to restart).",
+      "id": "feature-expose-promotion-state-from-the-game-hook-and-wire-the-promotion-ui-to-the-existing-promotion-executor-so-the-promotion-selection-actually-completes-the-pending-move-including-for-ai-vs-player-games",
+      "title": "Expose promotion state from the game hook and wire the promotion UI to the existing promotion executor so the promotion selection actually completes the pending move (including for AI-vs-player games).",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-implement-the-ai-opponent-with-three-difficulty-levels-easy-medium-pro-and-distinct-human-like-play-styles-aggressive-defensive-balanced-difficulty-must-materially-affect-playing-strength-and-pro-must-behave-like-an-expert-level-opponent-relative-to-easy-medium",
-      "title": "Implement the AI opponent with three difficulty levels (Easy, Medium, Pro) and distinct human-like play styles (Aggressive/Defensive/Balanced). Difficulty must materially affect playing strength, and Pro must behave like an expert-level opponent relative to Easy/Medium.",
+      "id": "feature-strengthen-full-chess-rules-validation-in-the-rules-engine-so-check-checkmate-castling-safety-are-correct-including-fixing-attack-detection-so-pawn-forward-moves-are-not-treated-as-attacks",
+      "title": "Strengthen full chess rules validation in the rules engine so check/checkmate/castling safety are correct, including fixing attack detection so pawn forward moves are not treated as attacks.",
       "reqIds": [
         "REQ-3"
       ],
       "version": 1
     },
     {
-      "id": "feature-provide-both-a-2d-chessboard-ui-and-a-clean-style-3d-board-option-the-3d-presentation-should-be-visually-clean-not-photorealistic-and-remain-functionally-equivalent-to-2d-gameplay-same-rules-same-move-input-output",
-      "title": "Provide both a 2D chessboard UI and a clean-style 3D board option. The 3D presentation should be visually clean (not photorealistic) and remain functionally equivalent to 2D gameplay (same rules, same move input/output).",
+      "id": "feature-update-draw-validation-to-better-reflect-standard-rules-for-threefold-repetition-tracking-and-insufficient-material-so-full-chess-rule-validation-does-not-incorrectly-declare-draws",
+      "title": "Update draw validation to better reflect standard rules for threefold repetition tracking and insufficient material, so “full chess rule validation” does not incorrectly declare draws.",
       "reqIds": [
         "REQ-4"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-minimal-animations-for-piece-movement-both-2d-and-3d-such-as-a-smooth-slide-lerp-from-source-square-to-destination-square-and-a-simple-capture-removal-animation-animations-must-not-allow-illegal-intermediate-states-or-desync-the-game-state",
-      "title": "Add minimal animations for piece movement (both 2D and 3D), such as a smooth slide/lerp from source square to destination square and a simple capture removal animation. Animations must not allow illegal intermediate states or desync the game state.",
-      "reqIds": [
-        "REQ-5"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-core-game-ux-elements-indicate-whose-turn-it-is-show-check-status-provide-a-move-history-list-in-algebraic-notation-san-or-a-clear-coordinate-notation-and-allow-starting-a-new-game-from-the-initial-position-with-the-currently-selected-settings",
-      "title": "Add core game UX elements: indicate whose turn it is, show check status, provide a move history list in algebraic notation (SAN or a clear coordinate notation), and allow starting a new game from the initial position with the currently selected settings.",
-      "reqIds": [
-        "REQ-6"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-define-and-apply-a-coherent-distinctive-visual-theme-for-the-app-ui-layout-typography-color-palette-suitable-for-a-chess-simulator-and-use-it-consistently-across-the-settings-screen-and-game-screen-do-not-use-a-blue-purple-primary-palette",
-      "title": "Define and apply a coherent, distinctive visual theme for the app UI (layout, typography, color palette) suitable for a chess simulator, and use it consistently across the settings screen and game screen. Do not use a blue/purple primary palette.",
-      "reqIds": [
-        "REQ-7"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-highlight-the-most-recent-completed-move-on-the-chessboard-by-visually-marking-both-the-from-square-and-the-to-square-in-both-2d-and-3d-board-modes",
-      "title": "Highlight the most recent completed move on the chessboard by visually marking both the from-square and the to-square in both 2D and 3D board modes.",
-      "reqIds": [
-        "REQ-8"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-side-of-board-ui-panels-that-display-all-captured-killed-pieces-for-both-players-updating-immediately-after-each-capture-including-en-passant",
-      "title": "Add side-of-board UI panels that display all captured (\"killed\") pieces for both players, updating immediately after each capture (including en passant).",
-      "reqIds": [
-        "REQ-9"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-rename-settings-labels-in-the-settings-panel-and-status-display-change-ai-personality-to-player-mode-and-change-ai-difficulty-to-difficulty-setting-while-keeping-the-underlying-option-values-and-behavior-unchanged",
-      "title": "Rename settings labels in the Settings panel and status display: change \"AI Personality\" to \"Player Mode\" and change \"AI Difficulty\" to \"Difficulty Setting\", while keeping the underlying option values and behavior unchanged.",
-      "reqIds": [
-        "REQ-10"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-improve-the-3d-chess-piece-visuals-by-updating-the-visual-styling-and-introducing-new-more-distinctive-3d-piece-shapes-for-all-piece-types-pawn-rook-knight-bishop-queen-king-while-keeping-piece-identity-unambiguous-and-the-3d-board-functionally-equivalent-to-the-2d-board",
-      "title": "Improve the 3D chess piece visuals by updating the visual styling and introducing new, more distinctive 3D piece shapes for all piece types (pawn, rook, knight, bishop, queen, king) while keeping piece identity unambiguous and the 3D board functionally equivalent to the 2D board.",
-      "reqIds": [
-        "REQ-11"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-make-3d-piece-movement-animations-smoother-more-fluid-motion-and-easing-without-allowing-illegal-intermediate-states-or-desynchronizing-the-underlying-game-state",
-      "title": "Make 3D piece movement animations smoother (more fluid motion and easing) without allowing illegal intermediate states or desynchronizing the underlying game state.",
-      "reqIds": [
-        "REQ-12"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-player-name-option-in-the-game-settings-panel-provide-an-input-field-that-lets-the-user-enter-a-player-name-and-keep-it-visible-in-the-settings-screen",
-      "title": "Add a player name option in the Game Settings panel: provide an input field that lets the user enter a player name and keep it visible in the settings screen.",
-      "reqIds": [
-        "REQ-13"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-reduce-the-visual-size-footprint-of-the-game-settings-box-so-it-takes-up-less-space-while-keeping-all-controls-usable-and-readable",
-      "title": "Reduce the visual size/footprint of the Game Settings box so it takes up less space while keeping all controls usable and readable.",
-      "reqIds": [
-        "REQ-14"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-rearrange-the-main-game-layout-to-be-stacked-vertically-in-this-order-1-game-settings-2-game-board-3-game-moves-move-history-below-the-board-4-captured-pieces-after-game-moves-and-apply-this-stacking-order-across-screen-sizes",
-      "title": "Rearrange the main game layout to be stacked vertically in this order: (1) Game Settings, (2) Game Board, (3) Game Moves (move history) below the board, (4) Captured Pieces after Game Moves, and apply this stacking order across screen sizes.",
-      "reqIds": [
-        "REQ-15"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-redesign-the-3d-chess-piece-geometries-so-each-piece-type-pawn-rook-knight-bishop-queen-king-is-clearly-distinguishable-from-a-top-down-view-without-adding-extra-top-face-markers-no-icons-symbols-lettering-and-while-keeping-the-3d-board-functionally-equivalent-to-the-2d-board",
-      "title": "Redesign the 3D chess piece geometries so each piece type (pawn, rook, knight, bishop, queen, king) is clearly distinguishable from a top-down view, without adding extra top-face markers (no icons/symbols/lettering) and while keeping the 3D board functionally equivalent to the 2D board.",
-      "reqIds": [
-        "REQ-16"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-the-game-settings-panel-layout-so-the-controls-inside-the-settings-box-are-aligned-horizontally-on-all-screen-sizes-while-keeping-the-overall-main-page-layout-stacked-vertically-settings-board-move-history-captured-pieces-and-further-reduce-the-settings-box-size-visual-footprint-while-keeping-all-controls-usable-and-readable",
-      "title": "Update the Game Settings panel layout so the controls inside the Settings box are aligned horizontally on all screen sizes while keeping the overall main page layout stacked vertically (Settings → Board → Move History → Captured Pieces), and further reduce the Settings box size/visual footprint while keeping all controls usable and readable.",
-      "reqIds": [
-        "REQ-17"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-the-game-settings-panel-so-the-three-selects-board-mode-difficulty-setting-player-mode-are-arranged-in-the-same-horizontal-row-on-all-screen-sizes-not-stacked-while-keeping-player-name-available-in-the-panel-and-preserving-the-existing-restart-confirm-behavior-when-changing-settings-mid-game",
-      "title": "Update the Game Settings panel so the three selects (Board Mode, Difficulty Setting, Player Mode) are arranged in the same horizontal row on all screen sizes (not stacked), while keeping Player Name available in the panel and preserving the existing restart-confirm behavior when changing settings mid-game.",
-      "reqIds": [
-        "REQ-18"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-redesign-and-replace-the-3d-knight-piece-geometry-to-fix-the-current-deformation-in-3d-mode-keeping-the-overall-clean-visual-style-consistent-with-the-existing-3d-set-and-ensuring-the-knight-remains-clearly-distinguishable-from-a-top-down-view",
-      "title": "Redesign and replace the 3D Knight piece geometry to fix the current deformation in 3D mode, keeping the overall clean visual style consistent with the existing 3D set and ensuring the knight remains clearly distinguishable from a top-down view.",
-      "reqIds": [
-        "REQ-19"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-improve-top-down-distinguishability-of-black-pieces-in-3d-mode-by-applying-a-light-gray-color-treatment-to-the-top-facing-surfaces-upper-accents-of-black-pieces-while-keeping-the-rest-of-the-black-piece-body-visibly-dark-and-ensure-the-change-is-consistent-across-all-black-piece-types",
-      "title": "Improve top-down distinguishability of black pieces in 3D mode by applying a light-gray color treatment to the top-facing surfaces/upper accents of black pieces (while keeping the rest of the black piece body visibly dark), and ensure the change is consistent across all black piece types.",
-      "reqIds": [
-        "REQ-20"
       ],
       "version": 1
     }
@@ -178,102 +44,18 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Implement full playable chess game with all standard chess rules",
+      "summary": "Implement pawn promotion from scratch with user selection via popup presented as an in-board overlay (queen/rook/bishop/knight).",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Human vs AI only gameplay (no human vs human)",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-3",
-      "summary": "AI opponent with Easy/Medium/Pro difficulty selectable by player; Pro plays at expert/champion strength",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-4",
-      "summary": "AI should simulate human-like play with distinct personalities (e.g., aggressive/defensive/balanced) across difficulty levels",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-5",
-      "summary": "Provide option to play in either 2D or clean-style 3D chessboard mode",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-6",
-      "summary": "Add minimal piece movement animations",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-7",
-      "summary": "Highlight the last move on the board (from-square and to-square)",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-8",
-      "summary": "Show captured/killed pieces for both players in side panels",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-9",
-      "summary": "Rename settings labels: 'AI personality' -> 'Player Mode' and 'AI Difficulty' -> 'Difficulty Setting'",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-10",
-      "summary": "Improve 3D board/piece visuals: update visual styling, introduce new piece shapes, and make animations smoother",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-11",
-      "summary": "Add a player-name option: allow user to enter player name in the Settings screen",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-12",
-      "summary": "UI layout update: reduce size of Game Settings box and rearrange screens to stack vertically in order Settings → Board → Game Moves (below board) → Captured Pieces",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-13",
-      "summary": "Redesign 3D chess piece shapes so each piece is clearly distinguishable from a top-down view (no extra top markers)",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-14",
-      "summary": "Align the controls inside the Game Settings box horizontally on all screen sizes while keeping the overall page vertical stack; also reduce the Game Settings box size",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-15",
-      "summary": "In 3D mode, apply a light-gray top surface/color treatment to black pieces to improve top-down distinguishability",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-16",
-      "summary": "Redesign/fix the 3D Knight geometry to resolve deformation while keeping overall 3D style consistent",
+      "summary": "Implement full chess rules validation (legal move validation including check/checkmate-related constraints).",
       "reqIds": [],
       "status": "pending"
     }
   ],
-  "projectName": "Shriram Chess Simulator",
+  "projectName": "Fix pawn promotion with in-board overlay popup and strengthen full chess rules validation",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

@@ -1,97 +1,105 @@
 {
   "kind": "build_request",
-  "title": "Fix Game Settings row layout and improve 3D knight + black piece top-view contrast",
+  "title": "Fix pawn promotion with in-board overlay popup and strengthen full chess rules validation",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-18",
-      "text": "Update the Game Settings panel so the three selects (Board Mode, Difficulty Setting, Player Mode) are arranged in the same horizontal row on all screen sizes (not stacked), while keeping Player Name available in the panel and preserving the existing restart-confirm behavior when changing settings mid-game.",
+      "id": "REQ-1",
+      "text": "Implement a pawn-promotion selection flow from scratch for human moves: when a pawn move reaches the last rank, pause move execution and show an in-board overlay popup that lets the player choose the promotion piece (queen, rook, bishop, knight), then apply the move with the chosen promotion.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4",
-          "msg-5",
-          "msg-6"
+          "msg-7",
+          "msg-8",
+          "msg-9"
         ],
         "quotes": [
-          "1. Board Mode, Difficulty Setting and Player mode to be arranged in same horizontal line.",
-          "1. Yes",
-          "yes proceed."
+          "Pawn Promotion Move is not working.",
+          "Please create from scratch. Check the logic of chess for the same.",
+          "1. pop up\n2. in board overlay",
+          "ok, proceed"
         ]
       },
       "acceptanceCriteria": [
-        "On mobile, tablet, and desktop widths, the Board Mode, Difficulty Setting, and Player Mode controls appear side-by-side in a single row (no wrapping/stacking).",
-        "Player Name input remains present in the Settings panel and remains usable.",
-        "Changing any of the three settings after at least one move still triggers the existing restart confirmation flow; changing before any moves applies immediately (current behavior preserved)."
+        "When a player attempts a pawn move to the last rank, the pawn does not immediately move; instead a promotion overlay appears on top of the board area (not a full-screen page).",
+        "The overlay offers exactly four choices: Queen, Rook, Bishop, Knight.",
+        "Selecting a piece closes the overlay and completes the move with the correct promoted piece placed on the destination square.",
+        "While the promotion overlay is open, normal square selection/moves are blocked until the player selects a promotion piece (or the overlay is dismissed via an explicit cancel action, if implemented).",
+        "Promotion works in both 2D and 3D board modes."
       ]
     },
     {
-      "id": "REQ-19",
-      "text": "Redesign and replace the 3D Knight piece geometry to fix the current deformation in 3D mode, keeping the overall clean visual style consistent with the existing 3D set and ensuring the knight remains clearly distinguishable from a top-down view.",
+      "id": "REQ-2",
+      "text": "Expose promotion state from the game hook and wire the promotion UI to the existing promotion executor so the promotion selection actually completes the pending move (including for AI-vs-player games).",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4",
-          "msg-5",
-          "msg-6"
+          "msg-7",
+          "msg-8"
         ],
         "quotes": [
-          "2. Knight Piece is deformed in 3 D mode, pls correct",
-          "2. Yes, Pls redesign",
-          "yes proceed."
+          "Pawn Promotion Move is not working.",
+          "1. pop up\n2. in board overlay",
+          "Yes, Full chess rule validation."
         ]
       },
       "acceptanceCriteria": [
-        "In 3D mode, the Knight renders without visible deformation/artifacts (no skewed, collapsed, or broken geometry).",
-        "From a top-down view, the Knight silhouette is clearly distinguishable versus pawn/rook/bishop/queen/king.",
-        "All other piece types remain unchanged in identity and functionality; gameplay and move input remain unaffected."
+        "The React state that tracks a pending promotion is accessible to the UI layer (e.g., via the hook return value) so the app can render the overlay only when needed.",
+        "Choosing a promotion piece calls the existing promotion action and clears the pending promotion state afterward.",
+        "If the AI makes a pawn move that reaches the last rank, the game completes the AI move with a valid promotion (default to queen unless the AI move already specifies a promotion)."
       ]
     },
     {
-      "id": "REQ-20",
-      "text": "Improve top-down distinguishability of black pieces in 3D mode by applying a light-gray color treatment to the top-facing surfaces/upper accents of black pieces (while keeping the rest of the black piece body visibly dark), and ensure the change is consistent across all black piece types.",
+      "id": "REQ-3",
+      "text": "Strengthen full chess rules validation in the rules engine so check/checkmate/castling safety are correct, including fixing attack detection so pawn forward moves are not treated as attacks.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4",
-          "msg-5",
-          "msg-6"
+          "msg-8"
         ],
         "quotes": [
-          "3. In 3D Mode,Black Coins are not distinghishable from top view. Can you use Light Gray coLour on top for Black pieces to distinguish.",
-          "3. yes",
-          "yes proceed."
+          "Yes, Full chess rule validation."
         ]
       },
       "acceptanceCriteria": [
-        "In 3D mode, black pieces have a clearly visible light-gray top/upper accent when viewed from above, improving contrast against the board.",
-        "The light-gray treatment is applied consistently for all black piece types (pawn, rook, knight, bishop, queen, king).",
-        "White pieces’ coloring remains visually consistent with the existing style.",
-        "No icons/letters/symbols are added to the pieces; the change is purely a material/color treatment."
+        "Check detection is correct for pawn attacks (diagonals only), and does not incorrectly report check due to pawn forward moves.",
+        "Castling is only legal when the king is not in check, does not pass through check, and does not end in check; path emptiness and rook presence are validated correctly.",
+        "Legal move generation does not allow moves that leave the moving side’s king in check (including en passant edge cases).",
+        "Game status correctly transitions among playing/checkmate/stalemate/draw based on the validated legal-move set."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Update draw validation to better reflect standard rules for threefold repetition tracking and insufficient material, so “full chess rule validation” does not incorrectly declare draws.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-8"
+        ],
+        "quotes": [
+          "Yes, Full chess rule validation."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Threefold repetition detection considers the full position state relevant to repetition (at minimum: piece placement plus side to move; and include castling/en-passant state if represented in state).",
+        "Insufficient material detection does not incorrectly return draw for positions that still have mating material, and correctly identifies basic insufficient-material cases (K vs K, K+N vs K, K+B vs K)."
       ]
     }
   ],
   "constraints": [
-    "Frontend files under frontend/src/components/ui and the immutable hook paths listed in SYSTEM_CONTEXT must not be edited directly; compose UI components instead.",
-    "Keep the backend as-is (single-actor Motoko); these changes must be frontend-only."
+    "Do not modify files under frontend/src/components/ui (read-only shadcn components); compose new UI components instead.",
+    "Do not edit immutable frontend hook files: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx.",
+    "Backend is single-actor Motoko and currently empty; do not introduce multi-canister architectures."
   ],
   "nonGoals": [
-    "Do not change chess rules, legal move generation, AI behavior, or difficulty/personality logic.",
-    "Do not add new authentication, networking, or backend persistence features.",
-    "Do not redesign the entire 3D board/camera/lighting beyond what is required to address the knight deformation and black-piece top-view contrast."
+    "Do not add third-party chess libraries; implement/fix logic within the existing engine code.",
+    "Do not add online multiplayer, real-time play, or persistence of games to the backend.",
+    "Do not redesign unrelated UI flows (settings panels, quit confirmation, move history labeling) beyond what is necessary to support the promotion overlay."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }
