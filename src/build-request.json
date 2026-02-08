@@ -1,0 +1,97 @@
+{
+  "kind": "build_request",
+  "title": "Fix Game Settings row layout and improve 3D knight + black piece top-view contrast",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-18",
+      "text": "Update the Game Settings panel so the three selects (Board Mode, Difficulty Setting, Player Mode) are arranged in the same horizontal row on all screen sizes (not stacked), while keeping Player Name available in the panel and preserving the existing restart-confirm behavior when changing settings mid-game.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4",
+          "msg-5",
+          "msg-6"
+        ],
+        "quotes": [
+          "1. Board Mode, Difficulty Setting and Player mode to be arranged in same horizontal line.",
+          "1. Yes",
+          "yes proceed."
+        ]
+      },
+      "acceptanceCriteria": [
+        "On mobile, tablet, and desktop widths, the Board Mode, Difficulty Setting, and Player Mode controls appear side-by-side in a single row (no wrapping/stacking).",
+        "Player Name input remains present in the Settings panel and remains usable.",
+        "Changing any of the three settings after at least one move still triggers the existing restart confirmation flow; changing before any moves applies immediately (current behavior preserved)."
+      ]
+    },
+    {
+      "id": "REQ-19",
+      "text": "Redesign and replace the 3D Knight piece geometry to fix the current deformation in 3D mode, keeping the overall clean visual style consistent with the existing 3D set and ensuring the knight remains clearly distinguishable from a top-down view.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4",
+          "msg-5",
+          "msg-6"
+        ],
+        "quotes": [
+          "2. Knight Piece is deformed in 3 D mode, pls correct",
+          "2. Yes, Pls redesign",
+          "yes proceed."
+        ]
+      },
+      "acceptanceCriteria": [
+        "In 3D mode, the Knight renders without visible deformation/artifacts (no skewed, collapsed, or broken geometry).",
+        "From a top-down view, the Knight silhouette is clearly distinguishable versus pawn/rook/bishop/queen/king.",
+        "All other piece types remain unchanged in identity and functionality; gameplay and move input remain unaffected."
+      ]
+    },
+    {
+      "id": "REQ-20",
+      "text": "Improve top-down distinguishability of black pieces in 3D mode by applying a light-gray color treatment to the top-facing surfaces/upper accents of black pieces (while keeping the rest of the black piece body visibly dark), and ensure the change is consistent across all black piece types.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4",
+          "msg-5",
+          "msg-6"
+        ],
+        "quotes": [
+          "3. In 3D Mode,Black Coins are not distinghishable from top view. Can you use Light Gray coLour on top for Black pieces to distinguish.",
+          "3. yes",
+          "yes proceed."
+        ]
+      },
+      "acceptanceCriteria": [
+        "In 3D mode, black pieces have a clearly visible light-gray top/upper accent when viewed from above, improving contrast against the board.",
+        "The light-gray treatment is applied consistently for all black piece types (pawn, rook, knight, bishop, queen, king).",
+        "White pieces’ coloring remains visually consistent with the existing style.",
+        "No icons/letters/symbols are added to the pieces; the change is purely a material/color treatment."
+      ]
+    }
+  ],
+  "constraints": [
+    "Frontend files under frontend/src/components/ui and the immutable hook paths listed in SYSTEM_CONTEXT must not be edited directly; compose UI components instead.",
+    "Keep the backend as-is (single-actor Motoko); these changes must be frontend-only."
+  ],
+  "nonGoals": [
+    "Do not change chess rules, legal move generation, AI behavior, or difficulty/personality logic.",
+    "Do not add new authentication, networking, or backend persistence features.",
+    "Do not redesign the entire 3D board/camera/lighting beyond what is required to address the knight deformation and black-piece top-view contrast."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
+  }
+}

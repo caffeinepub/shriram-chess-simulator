@@ -1,0 +1,56 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Fix Settings row layout; improve 3D knight geometry and black-piece top accents",
+  "requirements": [
+    {
+      "id": "REQ-18",
+      "summary": "Keep Player Name in Game Settings while forcing the three selects (Board Mode, Difficulty Setting, Player Mode) to stay side-by-side in a single horizontal row across all breakpoints, preserving existing restart-confirm behavior.",
+      "acceptanceCriteria": [
+        "On mobile, tablet, and desktop widths, the Board Mode, Difficulty Setting, and Player Mode controls appear side-by-side in a single row (no wrapping/stacking).",
+        "Player Name input remains present in the Settings panel and remains usable.",
+        "Changing any of the three settings after at least one move still triggers the existing restart confirmation flow; changing before any moves applies immediately (current behavior preserved)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/features/chess/settings/SettingsPanel.tsx",
+          "operation": "modify",
+          "description": "Update the SettingsPanel layout so Player Name remains available while the three Select controls are rendered in a single non-wrapping horizontal row at all screen sizes (e.g., a dedicated flex row with nowrap and equal-width children), without changing any onChange wiring/props (restart-confirm behavior is handled upstream). Use the shadcn-ui Card/Input/Select components to keep styling consistent. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-19",
+      "summary": "Redesign the 3D Knight geometry to eliminate deformation artifacts while keeping the clean style and ensuring a clearly distinguishable top-down silhouette.",
+      "acceptanceCriteria": [
+        "In 3D mode, the Knight renders without visible deformation/artifacts (no skewed, collapsed, or broken geometry).",
+        "From a top-down view, the Knight silhouette is clearly distinguishable versus pawn/rook/bishop/queen/king.",
+        "All other piece types remain unchanged in identity and functionality; gameplay and move input remain unaffected."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/features/chess/board3d/pieces3d.tsx",
+          "operation": "modify",
+          "description": "Replace the current Knight ('n') mesh construction with a more robust, artifact-free geometry composition (avoid problematic rotations/skew on box geometries) while preserving overall piece scale/positioning and keeping other piece types unchanged; ensure the top-down silhouette remains clearly recognizable as a knight."
+        }
+      ]
+    },
+    {
+      "id": "REQ-20",
+      "summary": "Improve top-down contrast of black 3D pieces by applying a light-gray treatment to top-facing surfaces/upper accents consistently across all black piece types, without changing white pieces or adding symbols.",
+      "acceptanceCriteria": [
+        "In 3D mode, black pieces have a clearly visible light-gray top/upper accent when viewed from above, improving contrast against the board.",
+        "The light-gray treatment is applied consistently for all black piece types (pawn, rook, knight, bishop, queen, king).",
+        "White pieces’ coloring remains visually consistent with the existing style.",
+        "No icons/letters/symbols are added to the pieces; the change is purely a material/color treatment."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/features/chess/board3d/pieces3d.tsx",
+          "operation": "modify",
+          "description": "Adjust 3D piece materials so black pieces keep a dark body color but use a light-gray material for top-facing surfaces/upper accents across pawn/rook/knight/bishop/queen/king (e.g., introduce a dedicated topAccent color for black and apply it only to the intended upper meshes); keep white piece colors consistent with the existing style and do not add any markings."
+        }
+      ]
+    }
+  ]
+}
